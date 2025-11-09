@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
+  "description": "AcquaSys Frontend - Painel de monitoramento em tempo real com integração MQTT, InfluxDB e Telegram.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -76,5 +77,20 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.6.3",
     "vite": "^5.4.19"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "acquasys",
+    "iot",
+    "frontend",
+    "react",
+    "vite",
+    "mqtt",
+    "influxdb",
+    "telegram",
+    "dashboard"
+  ],
+  "author": "Flávio de Morais <flaviodemorais@hotmail.com>"
 }
