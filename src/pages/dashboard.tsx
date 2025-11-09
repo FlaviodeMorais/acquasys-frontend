@@ -1,221 +1,179 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { wsManager } from "@/lib/websocket";
-import { apiRequest } from "@/lib/queryClient";
-import { SensorData, SystemConfig } from "@shared/schema";
-import MetricsGrid from "@/components/MetricsGrid";
-import { 
-  Power,
-  PlayCircle, 
-  PauseCircle, 
-  Activity,
-  Wifi,
-  WifiOff,
-  Monitor,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { wsClient } from "@/lib/websocket"; // <== integração WebSocket
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
+} from "recharts";
 
-export default function Dashboard() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [realtimeData, setRealtimeData] = useState<{
-    sensorData?: SensorData;
-    systemConfig?: SystemConfig;
-  }>({});
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
+type SensorPayload = {
+  device?: string;
+  timestamp?: string | number;
+  waterLevel?: number;
+  temperature?: number;
+  current?: number;
+  flowRate?: number;
+  efficiency?: number;
+  pump?: boolean;
+};
 
-  // Fetch MQTT data (real-time)
-  const { data: mqttData } = useQuery<SensorData>({
-    queryKey: ['/api/mqtt/sensor-data/latest'],
-    refetchInterval: 5000,
-  });
+export default function Dashboard(): JSX.Element {
+  const [sensor, setSensor] = useState<SensorPayload | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<string[]>([]);
+  const [connected, setConnected] = useState(false);
 
-  const { data: systemConfig, refetch: refetchSystemConfig } = useQuery<SystemConfig>({
-    queryKey: ['/api/system-config'],
-    refetchInterval: 5000,
-  });
-
-  const { data: systemAlerts } = useQuery({
-    queryKey: ['/api/system-alerts'],
-  });
-
-  // Control mutations
-  const pumpStartMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/pump/start'),
-    onSuccess: () => {
-      refetchSystemConfig();
-    }
-  });
-
-  const pumpStopMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/pump/stop'),
-    onSuccess: () => {
-      refetchSystemConfig();
-    }
-  });
-
-  const switchToAutoMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/pump/auto'),
-    onSuccess: () => {
-      refetchSystemConfig();
-    }
-  });
-
-  // WebSocket connection
   useEffect(() => {
-    const connectWebSocket = () => {
-      setConnectionStatus('connecting');
-      
-      wsManager.connect(() => {
-        setConnectionStatus('connected');
-        console.log('WebSocket conectado');
-      });
-
-      wsManager.onMessage((data) => {
-        if (data.type === 'sensorData') {
-          console.log('📊 Dados recebidos via WebSocket:', data.data);
-          
-          // Converter dados WebSocket para formato SensorData
-          const sensorData: SensorData = {
-            id: data.data.id,
-            timestamp: new Date(data.data.timestamp),
-            waterLevel: data.data.waterLevel,
-            temperature: data.data.temperature,
-            flowRate: data.data.flowRate,
-            vibration: data.data.vibrationXYZ ? 
-              Math.sqrt(
-                Math.pow(data.data.vibrationXYZ[0] || 0, 2) + 
-                Math.pow(data.data.vibrationXYZ[1] || 0, 2) + 
-                Math.pow(data.data.vibrationXYZ[2] || 0, 2)
-              ) : 0, // Calcular magnitude RMS real da vibração
-            current: data.data.current,
-            pumpStatus: data.data.pumpStatus,
-            efficiency: data.data.efficiency || 0,
-            connectionStatus: 'connected'
-          };
-          
-          setRealtimeData(prev => ({
-            ...prev,
-            sensorData: sensorData
-          }));
-          
-          queryClient.invalidateQueries({ queryKey: ['/api/mqtt/sensor-data/latest'] });
-        }
-      });
-
-      wsManager.onClose(() => {
-        setConnectionStatus('disconnected');
-        console.log('WebSocket desconectado');
-        setTimeout(connectWebSocket, 3000);
-      });
+    wsClient.onConnect = () => {
+      setConnected(true);
+      console.log("🟢 WS conectado");
     };
-
-    connectWebSocket();
-
-    return () => {
-      wsManager.disconnect();
+    wsClient.onDisconnect = () => {
+      setConnected(false);
+      console.log("🔴 WS desconectado");
     };
-  }, [queryClient]);
+    wsClient.onMessage = (msg) => {
+      switch (msg.type) {
+        case "sensorData":
+          setSensor(msg.data);
+          setHistory((prev) => [
+            ...prev.slice(-48),
+            {
+              time: new Date(msg.data.timestamp).toLocaleTimeString(),
+              level: msg.data.level ?? msg.data.waterLevel ?? 0,
+            },
+          ]);
+          break;
+        case "systemAlert":
+          setAlerts((prev) => [...prev.slice(-4), msg.data.message]);
+          break;
+        case "pumpStatus":
+          console.log("💧 Status da bomba:", msg.data);
+          break;
+      }
+    };
+    wsClient.connect();
 
-  const currentData = realtimeData.sensorData || mqttData;
-  const currentConfig = systemConfig;
+    return () => wsClient.close();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                AcquaSys v1.0 - Dashboard IoT
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Sistema de Monitoramento de Água - ESP32 + MQTT
-              </p>
-            </div>
-            
-            {/* Navigation & Connection Status */}
-            <div className="flex items-center gap-3">
-              
-              {/* Connection Status */}
-              <div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
-                {connectionStatus === 'connected' ? (
-                  <Wifi className="h-4 w-4 text-green-500" />
-                ) : (
-                  <WifiOff className="h-4 w-4 text-red-500" />
-                )}
-                <span className="text-sm">
-                  {connectionStatus === 'connected' ? 'Conectado' : 'Desconectado'}
-                </span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50 text-slate-800 p-6">
+      <header className="max-w-7xl mx-auto flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-md bg-gradient-to-br from-sky-600 to-blue-700 flex items-center justify-center text-white font-semibold text-lg">
+            A
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold">AcquaSys</h1>
+            <p className="text-sm text-slate-500">IoT · Monitoramento em tempo real</p>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        
-        {/* Metrics Grid with Controls */}
-        <div className="mb-8">
-          <MetricsGrid 
-            sensorData={currentData} 
-            systemConfig={currentConfig}
-            onPumpStart={() => pumpStartMutation.mutate()}
-            onPumpStop={() => pumpStopMutation.mutate()}
-            onPumpAuto={() => switchToAutoMutation.mutate()}
-            pumpStartPending={pumpStartMutation.isPending}
-            pumpStopPending={pumpStopMutation.isPending}
-            pumpAutoPending={switchToAutoMutation.isPending}
-          />
+        <div className="text-sm text-slate-600">
+          WS:{" "}
+          <span className={connected ? "text-green-600" : "text-red-500"}>
+            {connected ? "Online" : "Offline"}
+          </span>
         </div>
+      </header>
 
-        {/* Simulador Integrado */}
-        <div className="mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Monitor className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Simulador ESP32 - AcquaSys v1.0
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Projeto Wokwi: 441025764683811841
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <a
-                    href="https://wokwi.com/projects/441025764683811841"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-                  >
-                    <Monitor className="h-4 w-4" />
-                    Abrir Wokwi
-                  </a>
-                </div>
+      <main className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+        {/* Métricas */}
+        <section className="col-span-12 lg:col-span-4 grid grid-rows-2 gap-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-sm text-slate-500">Nível do Tanque</h2>
+            <div className="flex items-end gap-4 mt-3">
+              <div className="text-4xl font-bold text-sky-700">
+                {sensor ? `${(sensor.waterLevel ?? 0).toFixed(1)}%` : "--"}
+              </div>
+              <div className="text-sm text-slate-500">
+                Última leitura:{" "}
+                {sensor?.timestamp
+                  ? new Date(sensor.timestamp).toLocaleTimeString()
+                  : "-"}
               </div>
             </div>
-            
-            <div className="p-4">
-              <iframe
-                src="https://wokwi.com/projects/441025764683811841"
-                className="w-full h-[500px] border-0 rounded-lg"
-                title="Simulador ESP32 AcquaSys"
-                allow="accelerometer; gyroscope; microphone; camera; autoplay"
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                loading="lazy"
+            <div className="w-full h-3 bg-slate-100 rounded mt-4 overflow-hidden">
+              <div
+                className="h-3 bg-gradient-to-r from-emerald-400 to-sky-600"
+                style={{
+                  width: `${Math.max(0, Math.min(100, sensor?.waterLevel ?? 0))}%`,
+                }}
               />
             </div>
           </div>
-        </div>
 
-      </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-sm text-slate-500">Status da Bomba</h2>
+            <div className="flex items-center justify-between mt-3">
+              <div>
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                    sensor?.pump
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {sensor?.pump ? "LIGADA" : "DESLIGADA"}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-sm text-slate-500">Corrente</div>
+                <div className="text-lg font-medium">
+                  {sensor ? `${(sensor.current ?? 0).toFixed(2)} A` : "--"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Gráfico */}
+        <section className="col-span-12 lg:col-span-8 space-y-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Histórico (últimas 6h)</h3>
+              <div className="text-sm text-slate-500">
+                Atualiza em tempo real
+              </div>
+            </div>
+            <div style={{ height: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={history}>
+                  <CartesianGrid stroke="#e6eef8" />
+                  <XAxis dataKey="time" tick={{ fontSize: 11 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="level"
+                    stroke="#0078D4"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Alertas */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h4 className="text-sm text-slate-600 mb-2">Alertas</h4>
+            {alerts.length === 0 ? (
+              <div className="text-sm text-slate-400">Nenhum alerta ativo.</div>
+            ) : (
+              <ul className="space-y-2 mt-2">
+                {alerts.map((a, i) => (
+                  <li
+                    key={i}
+                    className="text-sm p-2 rounded border border-slate-100 bg-red-50 text-red-700"
+                  >
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
