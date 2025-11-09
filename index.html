@@ -6,11 +6,13 @@
   <title>AcquaSys</title>
   <meta name="description" content="AcquaSys · Dashboard de monitoramento" />
   <meta name="theme-color" content="#0078D4" />
+  <!-- Inter font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 
   <style>
-    :root{
+    :root {
       --bg:#f6f8fb;
       --card:#ffffff;
       --muted:#6b7280;
@@ -22,8 +24,7 @@
     .container{max-width:1200px;margin:28px auto;padding:20px}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
     .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:52px;height:52px;border-radius:8px;background:linear-gradient(135deg,var(--brand),#004a8a);
-      display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px}
+    .logo{width:52px;height:52px;border-radius:8px;background:linear-gradient(135deg,var(--brand),#004a8a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px}
     h1{margin:0;font-size:20px}
     p.subtitle{margin:0;color:var(--muted);font-size:13px}
     .status{display:flex;gap:14px;align-items:center;color:var(--muted);font-size:13px}
@@ -40,8 +41,9 @@
     .chip.on{background:#ecfeff;color:#0369a1}
     .chip.off{background:#fff7ed;color:#9a3412}
     .small-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
-    .alert{padding:10px;border-radius:8px;background:#fff3f2;color:#9b1c1c;border:1px solid #ffd7d2}
+    .alert{padding:10px;border-radius:8px;background:#fff3f2;color:#9b1c1c;border:1px solid #ffd7d2;margin-bottom:6px}
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+    #telegram-events{max-height:160px;overflow-y:auto;white-space:pre-line;font-size:13px;color:#1e293b;background:#f9fafb;padding:10px;border-radius:8px;border:1px solid #e5e7eb}
     @media (max-width:900px){
       .col-4,.col-8{grid-column:span 12}
       .small-grid{grid-template-columns:repeat(1,1fr)}
@@ -55,16 +57,17 @@
         <div class="logo">A</div>
         <div>
           <h1>AcquaSys</h1>
-          <p class="subtitle">Monitoramento em tempo real · IoT ESP32</p>
+          <p class="subtitle">Monitoramento IoT · Nível e Controle de Bombas</p>
         </div>
       </div>
       <div class="status" id="status-strip">
-        <div>Backend: <strong id="stat-mqtt" style="color:#ef4444">offline</strong></div>
-        <div>Banco: <strong id="stat-influx" style="color:#ef4444">offline</strong></div>
+        <div>MQTT: <strong id="stat-mqtt" style="color:#ef4444">offline</strong></div>
+        <div>InfluxDB: <strong id="stat-influx" style="color:#ef4444">offline</strong></div>
       </div>
     </header>
 
     <main class="grid">
+      <!-- Left column -->
       <section class="card col-4">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
@@ -80,16 +83,26 @@
             <div style="font-weight:600;font-size:18px" id="current">-- A</div>
           </div>
         </div>
-
-        <div class="bar"><div class="bar-fill" id="level-bar" style="width:0%"></div></div>
-
+        <div class="bar" aria-hidden="true">
+          <div class="bar-fill" id="level-bar" style="width:0%"></div>
+        </div>
         <div class="small-grid">
-          <div class="card" style="padding:12px"><div class="muted">Temperatura</div><div style="font-weight:700;font-size:18px" id="temp">-- °C</div></div>
-          <div class="card" style="padding:12px"><div class="muted">Vazão</div><div style="font-weight:700;font-size:18px" id="flow">-- L/m</div></div>
-          <div class="card" style="padding:12px"><div class="muted">Eficiência</div><div style="font-weight:700;font-size:18px" id="eff">-- %</div></div>
+          <div class="card" style="padding:12px">
+            <div class="muted">Temperatura</div>
+            <div style="font-weight:700;font-size:18px" id="temp">-- °C</div>
+          </div>
+          <div class="card" style="padding:12px">
+            <div class="muted">Vazão</div>
+            <div style="font-weight:700;font-size:18px" id="flow">-- L/m</div>
+          </div>
+          <div class="card" style="padding:12px">
+            <div class="muted">Eficiência</div>
+            <div style="font-weight:700;font-size:18px" id="eff">-- %</div>
+          </div>
         </div>
       </section>
 
+      <!-- Right column: chart -->
       <section class="card col-8">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div><div style="font-weight:700">Histórico de Nível</div><div class="muted">Últimas 6 horas</div></div>
@@ -98,11 +111,13 @@
         <div style="margin-top:12px"><canvas id="levelChart" height="160"></canvas></div>
       </section>
 
+      <!-- Alerts -->
       <aside class="col-4 card">
         <div style="font-weight:700">Alertas</div>
         <div id="alerts-list" style="margin-top:8px"><div class="muted">Nenhum alerta.</div></div>
       </aside>
 
+      <!-- Device info -->
       <section class="col-8 card">
         <div style="font-weight:700">Informações do dispositivo</div>
         <div style="margin-top:8px" class="muted">Dispositivo: <span id="device-name">—</span></div>
@@ -110,119 +125,121 @@
         <div class="muted">RSSI: <span id="rssi">—</span></div>
       </section>
 
-      <div class="col-12">
-        <div class="card"><div style="font-weight:700">Logs recentes</div><div class="muted" id="logs">Nenhum evento recente.</div></div>
+      <!-- Telegram / System events -->
+      <div class="col-12 card">
+        <div style="font-weight:700">Eventos do Sistema (Telegram / Backend)</div>
+        <div id="telegram-events">Aguardando eventos...</div>
+      </div>
+
+      <!-- Logs -->
+      <div class="col-12 card">
+        <div style="font-weight:700">Logs recentes</div>
+        <div class="muted" id="logs">Nenhum evento recente.</div>
       </div>
     </main>
 
-    <footer>© AcquaSys — Dashboard em tempo real.</footer>
+    <footer>© AcquaSys — Monitoramento em tempo real.</footer>
   </div>
 
-  <!-- 🔧 Backend Render -->
-  <script>window.API_URL="https://acquasys-backend.onrender.com";</script>
+  <!-- Backend URL -->
+  <script>window.API_URL = "https://acquasys-backend.onrender.com";</script>
 
   <script>
-    const API = window.API_URL;
+    const API = window.API_URL || location.origin;
+
     const endpoints = {
       latest: `${API}/api/mqtt/sensor-data/latest`,
       history: `${API}/api/mqtt/sensor-data/history?hours=6`
     };
 
     const el = {
-      level: document.getElementById('water-level'),
-      last: document.getElementById('last-update'),
-      levelBar: document.getElementById('level-bar'),
-      pumpChip: document.getElementById('pump-chip'),
-      current: document.getElementById('current'),
-      temp: document.getElementById('temp'),
-      flow: document.getElementById('flow'),
-      eff: document.getElementById('eff'),
-      alerts: document.getElementById('alerts-list'),
-      device: document.getElementById('device-name'),
-      heap: document.getElementById('heap'),
-      rssi: document.getElementById('rssi'),
-      logs: document.getElementById('logs'),
-      statMqtt: document.getElementById('stat-mqtt'),
-      statInflux: document.getElementById('stat-influx')
+      level: document.getElementById("water-level"),
+      levelBar: document.getElementById("level-bar"),
+      last: document.getElementById("last-update"),
+      pump: document.getElementById("pump-chip"),
+      current: document.getElementById("current"),
+      temp: document.getElementById("temp"),
+      flow: document.getElementById("flow"),
+      eff: document.getElementById("eff"),
+      device: document.getElementById("device-name"),
+      heap: document.getElementById("heap"),
+      rssi: document.getElementById("rssi"),
+      alerts: document.getElementById("alerts-list"),
+      events: document.getElementById("telegram-events"),
+      logs: document.getElementById("logs")
     };
 
-    const ctx=document.getElementById('levelChart').getContext('2d');
-    const chart=new Chart(ctx,{type:'line',data:{labels:[],datasets:[{label:'Nível (%)',data:[],fill:false,borderColor:'#0078D4',tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{stepSize:10}},x:{display:true}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}}}});
+    const chart = new Chart(document.getElementById("levelChart"), {
+      type:"line",
+      data:{labels:[],datasets:[{label:"Nível (%)",data:[],borderColor:"#0078D4",tension:0.3,pointRadius:0}]},
+      options:{responsive:true,scales:{y:{min:0,max:100}}}
+    });
 
-    function setStatus(elm,ok){elm.textContent=ok?'online':'offline';elm.style.color=ok?'#16a34a':'#ef4444';}
-    function pushLog(msg){const t=new Date().toLocaleTimeString();el.logs.textContent=`${t} — ${msg}\n`+el.logs.textContent;}
+    function pushEvent(msg){
+      const t = new Date().toLocaleTimeString();
+      el.events.textContent = `${t} — ${msg}\n` + el.events.textContent;
+    }
 
-    function applyLatest(data){
-      if(!data)return;
-      const lvl=Number(data.level??data.waterLevel??0);
-      el.level.textContent=`${lvl.toFixed(1)}%`;
-      el.levelBar.style.width=Math.max(0,Math.min(100,lvl))+'%';
-      el.last.textContent='Última: '+(new Date(data.timestamp||Date.now())).toLocaleString();
-      el.pumpChip.textContent=(data.pump?'LIGADA':'DESLIGADA');
-      el.pumpChip.className='chip '+(data.pump?'on':'off');
-      el.current.textContent=`${(data.current??0).toFixed(2)} A`;
-      el.temp.textContent=`${(data.temperature??0).toFixed(1)} °C`;
-      el.flow.textContent=`${(data.flowRate??0).toFixed(1)} L/m`;
-      el.eff.textContent=`${(data.efficiency??0).toFixed(1)} %`;
-      el.device.textContent=data.device??'—';
-      el.heap.textContent=data.heap?`${Math.round(data.heap/1024)} KB`:'—';
-      el.rssi.textContent=(data.rssi??'—')+' dBm';
-      pushLog(`Dados recebidos (nível ${lvl.toFixed(1)}%)`);
+    function pushLog(msg){
+      const t = new Date().toLocaleTimeString();
+      el.logs.textContent = `${t} — ${msg}\n` + el.logs.textContent;
+    }
+
+    function applyData(d){
+      if(!d) return;
+      el.level.textContent = `${d.level.toFixed(1)}%`;
+      el.levelBar.style.width = `${d.level}%`;
+      el.pump.textContent = d.pump ? "LIGADA" : "DESLIGADA";
+      el.pump.className = `chip ${d.pump ? "on" : "off"}`;
+      el.current.textContent = `${d.current.toFixed(2)} A`;
+      el.temp.textContent = `${d.temperature.toFixed(1)} °C`;
+      el.eff.textContent = `${d.efficiency?.toFixed(1) || 100}%`;
+      el.device.textContent = d.device || "—";
+      el.heap.textContent = d.heap ? `${Math.round(d.heap/1024)} KB` : "—";
+      el.rssi.textContent = `${d.rssi ?? "—"} dBm`;
     }
 
     async function fetchLatest(){
       try{
-        const res=await fetch(endpoints.latest);
-        const json=await res.json();
-        const data=json.mqtt||json;
-        applyLatest(data);
-        setStatus(el.statMqtt,true);
-      }catch(e){setStatus(el.statMqtt,false);pushLog('Falha fetchLatest:'+e);}
+        const res = await fetch(endpoints.latest);
+        const json = await res.json();
+        applyData(json.mqtt || json);
+      }catch(e){ pushLog("Erro ao buscar latest: "+e.message); }
     }
 
     async function fetchHistory(){
       try{
-        const res=await fetch(endpoints.history);
-        const json=await res.json();
-        const hist=Array.isArray(json)?json:(json.mqtt||[]);
-        const points=hist.map(r=>{const t=new Date(r.timestamp||r._time||Date.now());return{time:t.toLocaleTimeString(),level:Number(r.level??r.waterLevel??0)};}).slice(-96);
-        chart.data.labels=points.map(p=>p.time);
-        chart.data.datasets[0].data=points.map(p=>p.level);
+        const res = await fetch(endpoints.history);
+        const hist = await res.json();
+        const pts = hist.map(r=>({t:new Date(r.timestamp||r._time),y:r.level}));
+        chart.data.labels = pts.map(p=>p.t.toLocaleTimeString());
+        chart.data.datasets[0].data = pts.map(p=>p.y);
         chart.update();
-        setStatus(el.statInflux,true);
-      }catch(e){setStatus(el.statInflux,false);pushLog('Falha fetchHistory:'+e);}
+      }catch(e){ pushLog("Erro ao buscar histórico: "+e.message); }
     }
 
     function openWs(){
-      const ws=new WebSocket(API.replace(/^http/,'ws')+'/ws');
-      ws.onopen=()=>{pushLog('WebSocket conectado');setStatus(el.statMqtt,true);};
-      ws.onmessage=(evt)=>{
+      const wsUrl = API.replace(/^http/, "ws") + "/ws";
+      const ws = new WebSocket(wsUrl);
+      ws.onopen = ()=>pushEvent("Conectado ao servidor WebSocket");
+      ws.onmessage = evt=>{
         try{
-          const msg=JSON.parse(evt.data);
-          if(msg.type==='sensorData') applyLatest(msg.data);
-          else if(msg.type==='pumpStatus'){
-            const p=msg.data||msg;
-            el.pumpChip.textContent=(p.pump?'LIGADA':'DESLIGADA');
-            el.pumpChip.className='chip '+(p.pump?'on':'off');
-          }else if(msg.type==='systemAlert'){
-            const a=msg.data||msg;
-            const alert=document.createElement('div');alert.className='alert';alert.textContent=a.message;
-            el.alerts.innerHTML='';el.alerts.appendChild(alert);
-            pushLog('⚠️ '+a.message);
-          }
-        }catch(e){console.warn('WS msg error',e);}
+          const msg = JSON.parse(evt.data);
+          if(msg.type==="sensorData") applyData(msg.data);
+          if(msg.type==="telegramLog") pushEvent(msg.data.message);
+          if(msg.type==="systemAlert") pushEvent("🚨 "+msg.data.message);
+        }catch{}
       };
-      ws.onclose=()=>{setStatus(el.statMqtt,false);pushLog('WS fechado - retry em 10s');setTimeout(openWs,10000);};
+      ws.onclose = ()=>setTimeout(openWs, 5000);
+      ws.onerror = ()=>ws.close();
     }
 
     (async function init(){
       await fetchHistory();
       await fetchLatest();
-      setInterval(fetchLatest,5000);
       openWs();
+      setInterval(fetchLatest, 5000);
     })();
   </script>
 </body>
 </html>
-
-
