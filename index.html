@@ -6,9 +6,7 @@
   <title>AcquaSys</title>
   <meta name="description" content="AcquaSys · Dashboard de monitoramento" />
   <meta name="theme-color" content="#0078D4" />
-  <!-- Inter font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 
   <style>
@@ -23,14 +21,9 @@
     html,body{height:100%;margin:0;background:var(--bg);color:#0f172a}
     .container{max-width:1200px;margin:28px auto;padding:20px}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .brand{
-      display:flex;align-items:center;gap:12px;
-    }
-    .logo{
-      width:52px;height:52px;border-radius:8px;
-      background:linear-gradient(135deg,var(--brand),#004a8a);
-      display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;
-    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:52px;height:52px;border-radius:8px;background:linear-gradient(135deg,var(--brand),#004a8a);
+      display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px}
     h1{margin:0;font-size:20px}
     p.subtitle{margin:0;color:var(--muted);font-size:13px}
     .status{display:flex;gap:14px;align-items:center;color:var(--muted);font-size:13px}
@@ -62,18 +55,16 @@
         <div class="logo">A</div>
         <div>
           <h1>AcquaSys</h1>
-          <p class="subtitle">Monitoramento IoT · Nível e Controle de Bombas</p>
+          <p class="subtitle">Monitoramento em tempo real · IoT ESP32</p>
         </div>
       </div>
-
       <div class="status" id="status-strip">
-        <div>MQTT: <strong id="stat-mqtt" style="color:#ef4444">offline</strong></div>
-        <div>InfluxDB: <strong id="stat-influx" style="color:#ef4444">offline</strong></div>
+        <div>Backend: <strong id="stat-mqtt" style="color:#ef4444">offline</strong></div>
+        <div>Banco: <strong id="stat-influx" style="color:#ef4444">offline</strong></div>
       </div>
     </header>
 
     <main class="grid">
-      <!-- Left column: metrics -->
       <section class="card col-4">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
@@ -90,47 +81,26 @@
           </div>
         </div>
 
-        <div class="bar" aria-hidden="true">
-          <div class="bar-fill" id="level-bar" style="width:0%"></div>
-        </div>
+        <div class="bar"><div class="bar-fill" id="level-bar" style="width:0%"></div></div>
 
         <div class="small-grid">
-          <div class="card" style="padding:12px">
-            <div class="muted">Temperatura</div>
-            <div style="font-weight:700;font-size:18px" id="temp">-- °C</div>
-          </div>
-          <div class="card" style="padding:12px">
-            <div class="muted">Vazão</div>
-            <div style="font-weight:700;font-size:18px" id="flow">-- L/m</div>
-          </div>
-          <div class="card" style="padding:12px">
-            <div class="muted">Eficiência</div>
-            <div style="font-weight:700;font-size:18px" id="eff">-- %</div>
-          </div>
+          <div class="card" style="padding:12px"><div class="muted">Temperatura</div><div style="font-weight:700;font-size:18px" id="temp">-- °C</div></div>
+          <div class="card" style="padding:12px"><div class="muted">Vazão</div><div style="font-weight:700;font-size:18px" id="flow">-- L/m</div></div>
+          <div class="card" style="padding:12px"><div class="muted">Eficiência</div><div style="font-weight:700;font-size:18px" id="eff">-- %</div></div>
         </div>
       </section>
 
-      <!-- Right column: chart -->
       <section class="card col-8">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:700">Histórico de Nível</div>
-            <div class="muted">Últimas 6 horas</div>
-          </div>
+          <div><div style="font-weight:700">Histórico de Nível</div><div class="muted">Últimas 6 horas</div></div>
           <div class="muted" id="refresh-note">Atualiza a cada 5s</div>
         </div>
-
-        <div style="margin-top:12px">
-          <canvas id="levelChart" height="160"></canvas>
-        </div>
+        <div style="margin-top:12px"><canvas id="levelChart" height="160"></canvas></div>
       </section>
 
-      <!-- Alerts & info -->
       <aside class="col-4 card">
         <div style="font-weight:700">Alertas</div>
-        <div id="alerts-list" style="margin-top:8px">
-          <div class="muted">Nenhum alerta.</div>
-        </div>
+        <div id="alerts-list" style="margin-top:8px"><div class="muted">Nenhum alerta.</div></div>
       </aside>
 
       <section class="col-8 card">
@@ -141,42 +111,23 @@
       </section>
 
       <div class="col-12">
-        <div class="card">
-          <div style="font-weight:700">Logs recentes</div>
-          <div class="muted" id="logs">Nenhum evento recente.</div>
-        </div>
+        <div class="card"><div style="font-weight:700">Logs recentes</div><div class="muted" id="logs">Nenhum evento recente.</div></div>
       </div>
     </main>
 
-    <footer>
-      © AcquaSys — Monitoramento em tempo real.
-    </footer>
+    <footer>© AcquaSys — Dashboard em tempo real.</footer>
   </div>
 
-  <!-- 🔧 Define manualmente o backend para ambiente Vercel -->
-  <script>
-    window.API_URL = "https://acquasys-backend.onrender.com";
-  </script>
+  <!-- 🔧 Backend Render -->
+  <script>window.API_URL="https://acquasys-backend.onrender.com";</script>
 
   <script>
-    /* CONFIGURATION:
-       - Se usar Vite: defina VITE_API_URL em import.meta.env; aqui lemos window.API_URL ou processEnv global.
-       - By default tenta usar same-origin /api; melhor: set window.API_URL = 'https://acquasys-backend.onrender.com' antes de incluir o HTML.
-    */
-    const API = (function(){
-      if (typeof VITE_API_URL !== 'undefined') return VITE_API_URL;
-      if (typeof window?.API_URL === 'string') return window.API_URL;
-      // fallback to same origin
-      return '';
-    })();
-
+    const API = window.API_URL;
     const endpoints = {
-      latest: (api)=> (api? `${api}/api/mqtt/sensor-data/latest` : '/api/mqtt/sensor-data/latest'),
-      history: (api)=> (api? `${api}/api/mqtt/sensor-data/history?hours=6` : '/api/mqtt/sensor-data/history?hours=6'),
-      status: (api)=> (api? `${api}/api/mqtt/status` : '/api/mqtt/status')
+      latest: `${API}/api/mqtt/sensor-data/latest`,
+      history: `${API}/api/mqtt/sensor-data/history?hours=6`
     };
 
-    // DOM refs
     const el = {
       level: document.getElementById('water-level'),
       last: document.getElementById('last-update'),
@@ -195,147 +146,83 @@
       statInflux: document.getElementById('stat-influx')
     };
 
-    // Chart.js setup
-    const ctx = document.getElementById('levelChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: { labels: [], datasets: [{ label: 'Nível (%)', data: [], fill:false, borderColor:'#0078D4', tension:0.3, pointRadius:0 }] },
-      options: {
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          y:{min:0,max:100,ticks:{stepSize:10}},
-          x:{display:true}
-        },
-        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}}
-      }
-    });
+    const ctx=document.getElementById('levelChart').getContext('2d');
+    const chart=new Chart(ctx,{type:'line',data:{labels:[],datasets:[{label:'Nível (%)',data:[],fill:false,borderColor:'#0078D4',tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{stepSize:10}},x:{display:true}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}}}});
 
-    // Utilities
-    function setStatus(elm, ok){ elm.textContent = ok ? 'online' : 'offline'; elm.style.color = ok ? '#16a34a' : '#ef4444'; }
-    function pushLog(msg){ const t = new Date().toLocaleTimeString(); el.logs.textContent = `${t} — ${msg}\n` + el.logs.textContent; }
+    function setStatus(elm,ok){elm.textContent=ok?'online':'offline';elm.style.color=ok?'#16a34a':'#ef4444';}
+    function pushLog(msg){const t=new Date().toLocaleTimeString();el.logs.textContent=`${t} — ${msg}\n`+el.logs.textContent;}
 
-    // Update UI from latest object
     function applyLatest(data){
-      if(!data) return;
-      const lvl = Number(data.level ?? data.waterLevel ?? 0);
-      el.level.textContent = `${lvl.toFixed(1)}%`;
-      el.levelBar.style.width = Math.max(0,Math.min(100,lvl)) + '%';
-      el.last.textContent = 'Última: ' + (new Date(data.timestamp || Date.now())).toLocaleString();
-      el.pumpChip.textContent = (data.pump ? 'LIGADA' : 'DESLIGADA');
-      el.pumpChip.className = 'chip ' + (data.pump ? 'on' : 'off');
-      el.current.textContent = `${(data.current ?? 0).toFixed(2)} A`;
-      el.temp.textContent = `${(data.temperature ?? 0).toFixed(1)} °C`;
-      el.flow.textContent = `${(data.flowRate ?? 0).toFixed(1)} L/m`;
-      el.eff.textContent = `${(data.efficiency ?? 0).toFixed(1)} %`;
-      el.device.textContent = data.device ?? '—';
-      el.heap.textContent = data.heap ? `${Math.round(data.heap/1024)} KB` : '—';
-      el.rssi.textContent = (data.rssi ?? '—') + ' dBm';
-      pushLog(`Dados mais recentes recebidos (nível ${lvl.toFixed(1)}%)`);
-      // alerts
-      const alertList = [];
-      if (lvl < 12) alertList.push(`Nível crítico: ${lvl.toFixed(1)}%`);
-      if ((data.current ?? 0) > 4.5) alertList.push(`Corrente elevada: ${(data.current ?? 0).toFixed(2)} A`);
-      if ((data.efficiency ?? 100) < 50) alertList.push(`Eficiência baixa: ${(data.efficiency ?? 0).toFixed(1)}%`);
-      renderAlerts(alertList);
+      if(!data)return;
+      const lvl=Number(data.level??data.waterLevel??0);
+      el.level.textContent=`${lvl.toFixed(1)}%`;
+      el.levelBar.style.width=Math.max(0,Math.min(100,lvl))+'%';
+      el.last.textContent='Última: '+(new Date(data.timestamp||Date.now())).toLocaleString();
+      el.pumpChip.textContent=(data.pump?'LIGADA':'DESLIGADA');
+      el.pumpChip.className='chip '+(data.pump?'on':'off');
+      el.current.textContent=`${(data.current??0).toFixed(2)} A`;
+      el.temp.textContent=`${(data.temperature??0).toFixed(1)} °C`;
+      el.flow.textContent=`${(data.flowRate??0).toFixed(1)} L/m`;
+      el.eff.textContent=`${(data.efficiency??0).toFixed(1)} %`;
+      el.device.textContent=data.device??'—';
+      el.heap.textContent=data.heap?`${Math.round(data.heap/1024)} KB`:'—';
+      el.rssi.textContent=(data.rssi??'—')+' dBm';
+      pushLog(`Dados recebidos (nível ${lvl.toFixed(1)}%)`);
     }
 
-    function renderAlerts(list){
-      if(!list || list.length===0){
-        el.alerts.innerHTML = '<div class="muted">Nenhum alerta.</div>';
-        return;
-      }
-      el.alerts.innerHTML = '';
-      for(const a of list){
-        const d = document.createElement('div'); d.className='alert'; d.textContent=a;
-        el.alerts.appendChild(d);
-      }
-    }
-
-    // fetch latest, apply and return boolean success
     async function fetchLatest(){
       try{
-        const res = await fetch(endpoints.latest(API));
-        if(!res.ok) throw new Error('no-latest');
-        const data = await res.json();
+        const res=await fetch(endpoints.latest);
+        const json=await res.json();
+        const data=json.mqtt||json;
         applyLatest(data);
         setStatus(el.statMqtt,true);
-        return true;
-      }catch(e){
-        setStatus(el.statMqtt,false);
-        pushLog('Falha ao buscar latest: ' + (e.message || e));
-        return false;
-      }
+      }catch(e){setStatus(el.statMqtt,false);pushLog('Falha fetchLatest:'+e);}
     }
 
-    // fetch history and populate chart
     async function fetchHistory(){
       try{
-        const res = await fetch(endpoints.history(API));
-        if(!res.ok) throw new Error('no-history');
-        const hist = await res.json();
-        // normalize to points
-        const points = (Array.isArray(hist) ? hist : []).map(r => {
-          const t = new Date(r.timestamp || r._time || Date.now());
-          return { time: t.toLocaleTimeString(), level: (r.level ?? r.waterLevel ?? 0) };
-        }).slice(-96);
-        chart.data.labels = points.map(p=>p.time);
-        chart.data.datasets[0].data = points.map(p=>p.level);
+        const res=await fetch(endpoints.history);
+        const json=await res.json();
+        const hist=Array.isArray(json)?json:(json.mqtt||[]);
+        const points=hist.map(r=>{const t=new Date(r.timestamp||r._time||Date.now());return{time:t.toLocaleTimeString(),level:Number(r.level??r.waterLevel??0)};}).slice(-96);
+        chart.data.labels=points.map(p=>p.time);
+        chart.data.datasets[0].data=points.map(p=>p.level);
         chart.update();
         setStatus(el.statInflux,true);
-        pushLog('Histórico atualizado ('+points.length+' pontos)');
-        return true;
-      }catch(e){
-        setStatus(el.statInflux,false);
-        pushLog('Falha ao buscar histórico: ' + (e.message || e));
-        return false;
-      }
-    }
-
-    // Polling + websocket
-    let pollHandle = null;
-    async function startPolling(){
-      await fetchHistory();
-      await fetchLatest();
-      if(pollHandle) clearInterval(pollHandle);
-      pollHandle = setInterval(fetchLatest, 5000);
+      }catch(e){setStatus(el.statInflux,false);pushLog('Falha fetchHistory:'+e);}
     }
 
     function openWs(){
-      try{
-        const wsUrl = (function(){
-          const base = API || (location.origin);
-          // prefer ws at same host: /ws
-          return (base.startsWith('http') ? base.replace(/^http/, 'ws') : '') + '/ws';
-        })();
-        if(!wsUrl) return;
-        const ws = new WebSocket(wsUrl);
-        ws.onopen = ()=>{ pushLog('WebSocket conectado'); setStatus(el.statMqtt,true); };
-        ws.onmessage = (evt)=> {
-          try{
-            const msg = JSON.parse(evt.data);
-            if(msg.type === 'sensorData' || msg.type === 'data-update'){
-              const d = msg.data || msg.sensorData || msg;
-              applyLatest(d);
-            }
-          }catch(e){}
-        };
-        ws.onclose = ()=>{ pushLog('WebSocket desconectado (fallback para polling)'); setStatus(el.statMqtt,false); setTimeout(openWs,10000); };
-        ws.onerror = ()=>{ setStatus(el.statMqtt,false); ws.close(); };
-      }catch(e){}
+      const ws=new WebSocket(API.replace(/^http/,'ws')+'/ws');
+      ws.onopen=()=>{pushLog('WebSocket conectado');setStatus(el.statMqtt,true);};
+      ws.onmessage=(evt)=>{
+        try{
+          const msg=JSON.parse(evt.data);
+          if(msg.type==='sensorData') applyLatest(msg.data);
+          else if(msg.type==='pumpStatus'){
+            const p=msg.data||msg;
+            el.pumpChip.textContent=(p.pump?'LIGADA':'DESLIGADA');
+            el.pumpChip.className='chip '+(p.pump?'on':'off');
+          }else if(msg.type==='systemAlert'){
+            const a=msg.data||msg;
+            const alert=document.createElement('div');alert.className='alert';alert.textContent=a.message;
+            el.alerts.innerHTML='';el.alerts.appendChild(alert);
+            pushLog('⚠️ '+a.message);
+          }
+        }catch(e){console.warn('WS msg error',e);}
+      };
+      ws.onclose=()=>{setStatus(el.statMqtt,false);pushLog('WS fechado - retry em 10s');setTimeout(openWs,10000);};
     }
 
-    // Inicialização
     (async function init(){
-      // Try fetches
-      await startPolling();
-      // Try WebSocket (non-critical)
+      await fetchHistory();
+      await fetchLatest();
+      setInterval(fetchLatest,5000);
       openWs();
     })();
-
-    // expose for debugging
-    window.acquasys = { fetchLatest, fetchHistory, chart };
   </script>
 </body>
 </html>
+
 
